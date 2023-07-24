@@ -1,5 +1,6 @@
 import { addDoc, getDoc, getDocs, updateDoc, collection, doc, query, where } from "firebase/firestore";
 import { db } from "../firebase";
+import Swal from "sweetalert2";
 import * as moment from "moment";
 import React, { createContext, useEffect, useState } from "react";
 //Context
@@ -10,6 +11,8 @@ export const UserLogProvider = ({ children }) => {
   const [userToken, setUserToken] = useState(userTokenLS);
 
   const logSession = async (credentials) => {
+    const { uname, password } = credentials;
+    if (uname.length < 4 || password.length < 4) throw "credentials/incomplete";
     const res = await getDocs(query(collection(db, "users"), where("uname", "==", credentials.uname), where("password", "==", credentials.password)));
     if (res.docs[0]) {
       const newUserLogInfo = {
@@ -18,8 +21,16 @@ export const UserLogProvider = ({ children }) => {
         expirationdate: moment().add(7, "d").format("DD-MM-YYYY, HH:mm:ss"),
       };
       const resAdded = await addDoc(collection(db, "userlogs"), newUserLogInfo);
-      localStorage.setItem("UserToken", resAdded.id);
-      setUserToken(resAdded.id);
+      Swal.fire({
+        position: "center",
+        icon: "success",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+      setTimeout(() => {
+        localStorage.setItem("UserToken", resAdded.id);
+        setUserToken(resAdded.id);
+      }, 2000);
     } else {
       console.log("Usuario o contraseña incorrecta");
     }

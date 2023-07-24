@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
+import Swal from "sweetalert2";
 import { db } from "../firebase";
 import { collection, doc, getDocs, addDoc, deleteDoc, query, where } from "firebase/firestore";
 import UserLogContext from "../Context/UserLogContext";
@@ -39,7 +40,14 @@ const AddTaskModal = ({ isAddTaskModalOpen, setAddTaskModalStatus, getNewData })
     if (newTaskInfo.title.length == 0 && newTaskInfo.tasks.length == 0) return console.log("No se puede enviar");
     await actSession(async (userId) => {
       const res = await addDoc(collection(db, "tasks"), { ...newTaskInfo, owner: userId });
-      e.target.reset();
+      Swal.fire({
+        position: "center",
+        icon: "success",
+        title: "Tarea creada exitosamente",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+      // e.target.reset();
       getNewData();
       setAddTaskModalStatus(false);
       setNewTaskInfo(empty);
@@ -116,10 +124,16 @@ const AddTaskModal = ({ isAddTaskModalOpen, setAddTaskModalStatus, getNewData })
   );
 };
 const ToDoList = ({ data, getNewData }) => {
-  const handlerDeleteTask = (taskID) => {
-    deleteDoc(doc(db, "tasks", taskID)).then(() => {
-      getNewData();
+  const handlerDeleteTask = async (taskID) => {
+    await deleteDoc(doc(db, "tasks", taskID));
+    Swal.fire({
+      position: "center",
+      icon: "success",
+      title: "Tarea eliminada exitosamente!",
+      showConfirmButton: false,
+      timer: 1500,
     });
+    getNewData();
   };
   const handlerEditTask = (taskID) => {
     getNewData();
@@ -172,9 +186,12 @@ const ToDoList = ({ data, getNewData }) => {
       </ul>
     );
   }
-  return <p>Cargando . . . </p>;
+  return (
+    <div className='flex justify-center items-center w-full h-72 '>
+      <p className="h-min">No hay tareas asignadas, agrega una para enlistar las tareas</p>
+    </div>
+  );
 };
-
 const ToDo = () => {
   const { actSession } = useContext(UserLogContext);
   const [data, setData] = useState([]);
@@ -187,7 +204,7 @@ const ToDo = () => {
   const getNewData = async () => {
     await actSession(async (userId) => {
       const res = await getDocs(query(collection(db, "tasks"), where("owner", "==", userId)));
-      const data = res.docs
+      const data = res.docs;
       const newDataFormatted = [];
       data.forEach((doc) => {
         newDataFormatted.push({ id: doc.id, ...doc.data() });
