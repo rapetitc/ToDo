@@ -28,6 +28,7 @@ const CreateUserForm = () => {
         navigate("/");
       }, 2000);
     } catch (error) {
+      console.log(error);
       Swal.fire({
         position: "center",
         icon: "error",

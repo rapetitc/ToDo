@@ -1,23 +1,15 @@
 export const evalInput = (target) => {
+  let customError = ""
   target.className += " valid:border-green-500 invalid:border-red-500"
-  if (target.value.length < 4) {
-    target.setCustomValidity("Debe contener 4 o mas caracteres");
-    return false;
-  }
-  target.setCustomValidity("");
-  return true;
+  if (target.value.length < 4) customError = "Debe contener 4 caracteres o mas"
+  target.setCustomValidity(customError);
+  return JSON.parse(`{"${target.name}":"${target.value}"}`)
 };
-export const evalForm = (form) => {
-  const { elements } = form;
-  let evalResult = [];
+export const evalForm = ({ elements }) => {
+  let values = {};
   for (let i = 0; i < elements.length - 1; i++) {
-    if (evalInput(elements[i])) evalResult.push(true);
+    if (evalInput(elements[i])) Object.assign(values, JSON.parse(`{"${elements[i].name}":"${elements[i].value}"}`));
   }
-  if (evalResult.length != 4) throw "Campos incompletos";
-  return {
-    uname: elements["uname"].value,
-    password: elements["password"].value,
-    fname: elements["fname"].value,
-    lname: elements["lname"].value,
-  };
+  if (Object.keys(values).length != elements.length - 1) throw "Campos incompletos";
+  return values
 };

@@ -3,19 +3,15 @@ import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
 //Context
 import UserLogContext from "../Context/UserLogContext";
-import { evalInput } from "../utils/inputEval";
+import { evalInput, evalForm } from "../utils/inputEval";
 
 const LogInForm = () => {
   const { logSession } = useContext(UserLogContext);
 
   const handlingSubmit = async (e) => {
     e.preventDefault();
-    //TODO Eval creadential before perform the log in
-    const credentials = {
-      uname: e.target[0].value,
-      password: e.target[1].value,
-    };
     try {
+      const credentials = evalForm(e.target);
       await logSession(credentials);
     } catch (error) {
       Swal.fire({

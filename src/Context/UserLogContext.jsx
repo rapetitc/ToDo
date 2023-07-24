@@ -14,26 +14,23 @@ export const UserLogProvider = ({ children }) => {
     const { uname, password } = credentials;
     if (uname.length < 4 || password.length < 4) throw "credentials/incomplete";
     const res = await getDocs(query(collection(db, "users"), where("uname", "==", credentials.uname), where("password", "==", credentials.password)));
-    if (res.docs[0]) {
-      const newUserLogInfo = {
-        userid: res.docs[0].id,
-        creationdate: moment().format("DD-MM-YYYY, HH:mm:ss"),
-        expirationdate: moment().add(7, "d").format("DD-MM-YYYY, HH:mm:ss"),
-      };
-      const resAdded = await addDoc(collection(db, "userlogs"), newUserLogInfo);
-      Swal.fire({
-        position: "center",
-        icon: "success",
-        showConfirmButton: false,
-        timer: 1500,
-      });
-      setTimeout(() => {
-        localStorage.setItem("UserToken", resAdded.id);
-        setUserToken(resAdded.id);
-      }, 2000);
-    } else {
-      console.log("Usuario o contraseña incorrecta");
-    }
+    if (!res.docs[0]) throw "Usuario o contraseña incorrecta";
+    const newUserLogInfo = {
+      userid: res.docs[0].id,
+      creationdate: moment().format("DD-MM-YYYY, HH:mm:ss"),
+      expirationdate: moment().add(7, "d").format("DD-MM-YYYY, HH:mm:ss"),
+    };
+    const resAdded = await addDoc(collection(db, "userlogs"), newUserLogInfo);
+    Swal.fire({
+      position: "center",
+      icon: "success",
+      showConfirmButton: false,
+      timer: 1500,
+    });
+    setTimeout(() => {
+      localStorage.setItem("UserToken", resAdded.id);
+      setUserToken(resAdded.id);
+    }, 2000);
   };
 
   const expSession = async () => {
