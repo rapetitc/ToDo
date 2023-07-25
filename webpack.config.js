@@ -39,7 +39,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      title: "ToDo App",
+      title: "To Do",
       inject: 'body',
     })
   ],

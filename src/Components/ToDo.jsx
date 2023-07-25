@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useContext } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
+// Local Modules
 import { db } from "../firebase";
-//Context
+// Context
 import UserLogContext from "../Context/UserLogContext";
-//Components
+// Components
 import AddTaskModal from "./AddTaskModal";
 import ToDoList from "./ToDoList";
 
@@ -17,15 +18,19 @@ const ToDo = () => {
   };
 
   const getNewData = async () => {
-    await actSession(async (userId) => {
-      const res = await getDocs(query(collection(db, "tasks"), where("owner", "==", userId)));
-      const data = res.docs;
-      const newDataFormatted = [];
-      data.forEach((doc) => {
-        newDataFormatted.push({ id: doc.id, ...doc.data() });
+    try {
+      await actSession(async (userId) => {
+        const res = await getDocs(query(collection(db, "tasks"), where("owner", "==", userId)));
+        const data = res.docs;
+        const newDataFormatted = [];
+        data.forEach((doc) => {
+          newDataFormatted.push({ id: doc.id, ...doc.data() });
+        });
+        setData(newDataFormatted);
       });
-      setData(newDataFormatted);
-    });
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   useEffect(() => {

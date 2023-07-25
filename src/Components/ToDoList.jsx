@@ -1,21 +1,33 @@
 import React from "react";
 import { deleteDoc, doc } from "firebase/firestore";
-import { db } from "../firebase";
 import Swal from "sweetalert2";
+// Local Modules
+import { db } from "../firebase";
 
 const ToDoList = ({ data, getNewData }) => {
   const removeTask = async (taskID) => {
-    await deleteDoc(doc(db, "tasks", taskID));
-    getNewData();
-    Swal.fire({
-      position: "center",
-      icon: "success",
-      title: "Tarea eliminada exitosamente!",
-      showConfirmButton: false,
-      timer: 1500,
-    });
+    try {
+      await deleteDoc(doc(db, "tasks", taskID));
+      getNewData();
+      Swal.fire({
+        position: "center",
+        icon: "success",
+        title: "Tarea eliminada exitosamente!",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+    } catch (error) {
+      console.log(error);
+    }
   };
-  const editTask = (taskID) => {};
+  const editTask = (taskID) => {
+    // TODO
+    console.log("Task Editted");
+  };
+  const handlerTaskStatus = (taskID) => {
+    // TODO
+    console.log("Task Done");
+  };
 
   if (data.length > 0) {
     return (
@@ -51,7 +63,7 @@ const ToDoList = ({ data, getNewData }) => {
               {item.tasks.map((task, i) => {
                 return (
                   <div key={i}>
-                    <input type='checkbox' id={`task${item.id}-${i}`} defaultChecked={task.status} className='m-1' />
+                    <input type='checkbox' id={`task${item.id}-${i}`} defaultChecked={task.status} className='m-1' onChange={handlerTaskStatus} />
                     <label htmlFor={`task${item.id}-${i}`} className='m-1'>
                       {task.task}
                     </label>

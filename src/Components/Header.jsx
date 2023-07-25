@@ -1,6 +1,8 @@
 import React, { useContext } from "react";
 import { Link } from "react-router-dom";
-//Context
+// Local Modules
+import { pageConfig } from "../utils/config";
+// Context
 import UserLogContext from "../Context/UserLogContext";
 
 const Header = () => {
@@ -11,9 +13,9 @@ const Header = () => {
   };
 
   return (
-    <header className='flex justify-between align-middle m-1'>
+    <header className={`flex ${userToken.length > 0 ? "justify-between" : "justify-center"} align-middle m-1`}>
       <Link to={"/"}>
-        <h1 className='p-2 text-4xl'>ToDo App</h1>
+        <h1 className='p-2 text-4xl'>{pageConfig.title}</h1>
       </Link>
       {userToken.length > 0 ? (
         <>

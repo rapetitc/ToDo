@@ -1,7 +1,9 @@
 import React, { useState, useContext } from "react";
 import { addDoc, collection } from "firebase/firestore";
-import { db } from "../firebase";
 import Swal from "sweetalert2";
+//Local Modules
+import { db } from "../firebase";
+import { evalForm } from "../utils/inputEval";
 //Context
 import UserLogContext from "../Context/UserLogContext";
 
@@ -29,26 +31,30 @@ const AddTaskModal = ({ isAddTaskModalOpen, setAddTaskModalStatus, getNewData })
     copyTask.tasks = copyTask.tasks.filter((item) => {
       return item != copyTask.tasks[id];
     });
-    if (copyTask.tasks.length == 0) copyTask.tasks.push({ task: "", status: false })
+    if (copyTask.tasks.length == 0) copyTask.tasks.push({ task: "", status: false });
     setNewTaskInfo({ ...copyTask });
   };
 
   const handlerSubmit = async (e) => {
     e.preventDefault();
-    if (newTaskInfo.title.length == 0 && newTaskInfo.tasks.length == 0) return console.log("No se puede enviar");
-    await actSession(async (userId) => {
-      const res = await addDoc(collection(db, "tasks"), { ...newTaskInfo, owner: userId });
-      Swal.fire({
-        position: "center",
-        icon: "success",
-        title: "Tarea creada exitosamente",
-        showConfirmButton: false,
-        timer: 1500,
+    try {
+      evalForm(e.target);
+      await actSession(async (userId) => {
+        await addDoc(collection(db, "tasks"), { ...newTaskInfo, owner: userId });
+        Swal.fire({
+          position: "center",
+          icon: "success",
+          title: "Tarea creada exitosamente",
+          showConfirmButton: false,
+          timer: 1500,
+        });
+        getNewData();
+        setAddTaskModalStatus(false);
+        setNewTaskInfo(empty);
       });
-      getNewData();
-      setAddTaskModalStatus(false);
-      setNewTaskInfo(empty);
-    });
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (

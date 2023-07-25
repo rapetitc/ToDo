@@ -1,8 +1,9 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { addDoc, getDocs, collection, query, where } from "firebase/firestore";
 import Swal from "sweetalert2";
 import * as moment from "moment";
-import { addDoc, getDocs, collection, query, where } from "firebase/firestore";
+// Local Modules
 import { db } from "../firebase";
 import { evalForm, evalInput } from "../utils/inputEval";
 
@@ -12,9 +13,9 @@ const CreateUserForm = () => {
   const handlingSubmit = async (e) => {
     e.preventDefault();
     try {
-      const formInfo = evalForm(e.target);
-      const res = await getDocs(query(collection(db, "users"), where("uname", "==", formInfo.uname)));
-      if (res.docs[0]) throw "Nombre de usuario existente!";
+      const { uname } = evalForm(e.target);
+      const res = await getDocs(query(collection(db, "users"), where("uname", "==", uname)));
+      if (res.docs[0]) throw "CreateUser/UserNameExists";
       await addDoc(collection(db, "users"), { ...formInfo, type: "user", creationdate: moment().format("DD-MM-YYYY, HH:mm:ss"), status: true });
       Swal.fire({
         position: "center",
@@ -29,18 +30,20 @@ const CreateUserForm = () => {
       }, 2000);
     } catch (error) {
       console.log(error);
-      Swal.fire({
-        position: "center",
-        icon: "error",
-        title: error,
-        showConfirmButton: false,
-        timer: 1500,
-      });
+      if (error == "CreateUser/UserNameExists") {
+        Swal.fire({
+          position: "center",
+          icon: "error",
+          title: "Nombre de usuario ya existente",
+          showConfirmButton: false,
+          timer: 1500,
+        });
+      }
     }
   };
 
   return (
-    <form onSubmit={handlingSubmit} className='flex flex-wrap justify-center w-11/12 h-min py-6 my-3 mx-auto rounded-lg bg-gradient-to-r from-purple-500 to-pink-500'>
+    <form onSubmit={handlingSubmit} className='flex flex-wrap justify-center w-11/12 h-min py-6 my-5 mx-auto rounded-lg bg-gradient-to-r from-purple-500 to-pink-500'>
       <h1 className='text-4xl p-1 mb-5'>Crear cuenta</h1>
       <div className='flex justify-center flex-wrap w-full m-1'>
         <p className='w-full mx-5 my-2' htmlFor='uname'>
@@ -107,7 +110,7 @@ const CreateUserForm = () => {
           Crear Usuario
         </button>
       </div>
-      <div className='flex justify-center flex-wrap w-full m-1'>
+      <div className='flex justify-center flex-wrap w-full mx-5 my-1'>
         <p className='text-center'>
           Ya tienes una cuenta registrada?.{" "}
           <Link to='/' className='w-full text-fuchsia-900 cursor-pointer hover:underline'>

@@ -1,15 +1,18 @@
-export const evalInput = (target) => {
-  let customError = ""
-  target.className += " valid:border-green-500 invalid:border-red-500"
-  if (target.value.length < 4) customError = "Debe contener 4 caracteres o mas"
-  target.setCustomValidity(customError);
-  return JSON.parse(`{"${target.name}":"${target.value}"}`)
+export const evalInput = ({ name, value }) => {
+  let customErrorMsg = "", isInputValid = true
+  if (name == "password" && value.length < 8) customErrorMsg = "Contrasaña debe contener 8 o mas caracteres"
+  if (value.length < 1) customErrorMsg = "Debe contener 1 o mas caracteres"
+  if (customErrorMsg.length > 0) isInputValid = false
+  return [JSON.parse(`{"${name}":"${value}"}`), { customErrorMsg, isInputValid }]
 };
 export const evalForm = ({ elements }) => {
-  let values = {};
-  for (let i = 0; i < elements.length - 1; i++) {
-    if (evalInput(elements[i])) Object.assign(values, JSON.parse(`{"${elements[i].name}":"${elements[i].value}"}`));
+  const entries = Object.values(elements).filter((element) => { return element.type == "text" || element.type == "password" })
+  let formData = {}, isFormValid = true;
+  for (let i = 0; i < entries.length; i++) {
+    const [inputData, results] = evalInput(entries[i])
+    if (!results.isInputValid) isFormValid = false
+    Object.assign(formData, inputData);
   }
-  if (Object.keys(values).length != elements.length - 1) throw "Campos incompletos";
-  return values
+  if (!isFormValid) throw "Form/Incomplete";
+  return formData
 };
