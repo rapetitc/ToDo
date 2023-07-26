@@ -11,7 +11,7 @@ import ToDoList from "./ToDoList";
 const ToDo = () => {
   const { actSession } = useContext(UserLogContext);
   const [data, setData] = useState([]);
-  const [isAddTaskModalOpen, setAddTaskModalStatus] = useState(false);
+  const [isAddTaskModalOpen, setAddTaskModalStatus] = useState(true);
 
   const handlerOpenModal = () => {
     setAddTaskModalStatus(true);
