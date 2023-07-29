@@ -1,20 +1,12 @@
 import React from "react";
-import { collection, deleteDoc, doc, getDoc } from "firebase/firestore";
 import Swal from "sweetalert2";
-// Local Modules
-import { db } from "../firebase";
-
-const AssignationSection = ({ fname, lname, uname }) => {
-  // const resGet =  getDoc(doc(db, "users", userid));
-  // const { fname, lname, uname } = resGet.data();
-  return <p>{`${fname} ${lname}`}</p>;
-};
+import TaskMng from "../Controllers/TaskManager";
 
 const ToDoList = ({ data, getNewData }) => {
   const removeTask = async (taskID) => {
-    try {
-      await deleteDoc(doc(db, "tasks", taskID));
-      getNewData();
+    const { isOk } = await TaskMng.deleteTask(taskID);
+    if (isOk) {
+      await getNewData();
       Swal.fire({
         position: "center",
         icon: "success",
@@ -22,25 +14,25 @@ const ToDoList = ({ data, getNewData }) => {
         showConfirmButton: false,
         timer: 1500,
       });
-    } catch (error) {
-      console.log(error);
+    } else {
+      console.log("Error al intentar eliminar una tarea");
     }
   };
-  const editTask = (taskID) => {
+  /*  const editTask = (taskID) => {
     // TODO
     console.log("Task Editted");
-  };
-  const editTaskStatus = (taskID) => {
-    // TODO
-    console.log("Task Done");
+  }; */
+  const editTaskStatus = async (id, i) => {
+    const { isOk } = await TaskMng.updateTaskStatus(id, i);
+    if (isOk) console.log(`Tarea ${id} actualizada`);
   };
 
   if (data.length > 0) {
     return (
-      <div className='w-full'>
+      <div className='grid gap-2 w-full' style={{ gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
         {data.map(({ id, title, taskList, assignations, limitDate }, i) => (
-          <div className='my-5 p-1 rounded-md border-2 border-solid border-slate-300' key={i}>
-            <div className='flex justify-between p-1 border-b-2'>
+          <div className='w-full p-1 bg-white rounded-md border-2 border-slate-300' key={i}>
+            <div className='flex justify-between p-1 '>
               <h3 className='text-lg font-semibold'>{title}</h3>
               <div>
                 {/* <button
@@ -69,7 +61,15 @@ const ToDoList = ({ data, getNewData }) => {
               {taskList.map((task, i) => {
                 return (
                   <div key={i}>
-                    <input type='checkbox' id={`task${id}-${i}`} defaultChecked={task.status} className='m-1' onChange={editTaskStatus} />
+                    <input
+                      type='checkbox'
+                      id={`task${id}-${i}`}
+                      defaultChecked={task.status}
+                      className='m-1'
+                      onChange={() => {
+                        editTaskStatus(id, i, task.status);
+                      }}
+                    />
                     <label htmlFor={`task${id}-${i}`} className='m-1'>
                       {task.task}
                     </label>
@@ -78,16 +78,7 @@ const ToDoList = ({ data, getNewData }) => {
               })}
             </div>
             <div className='flex flex-wrap p-1 border-t-2'>
-              {assignations.length > 0 ? (
-                <div className='flex flex-wrap w-full'>
-                  Asignaciones:{" "}
-                  {assignations.map(({ fname, lname }, i) => {
-                    return <p className='mx-1' key={i}>{`${fname} ${lname}`}</p>;
-                  })}
-                </div>
-              ) : (
-                ""
-              )}
+              {assignations.length > 0 ? <div className='flex flex-wrap w-full'>Asignaciones: {`${assignations.length}`}</div> : ""}
               <div className='w-full'>{limitDate != "NoLimits" ? <p>Vence el: {limitDate}</p> : <p>Sin fecha de vencimiento</p>}</div>
             </div>
           </div>
@@ -95,6 +86,7 @@ const ToDoList = ({ data, getNewData }) => {
       </div>
     );
   }
+
   return (
     <div className='flex justify-center items-center w-full h-72 '>
       <p className='h-min text-center'>No hay tareas asignadas, agrega una para enlistar las tareas</p>

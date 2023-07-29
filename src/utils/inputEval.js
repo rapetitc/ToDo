@@ -16,3 +16,8 @@ export const evalForm = ({ elements }) => {
   if (!isFormValid) throw "Form/Incomplete";
   return formData
 };
+
+export const setInputValidity = (target, validation) => {
+  // TODO Terminar actualizacion UI
+  console.log("Setting UI Validations", target, `to ${validation}`);
+}

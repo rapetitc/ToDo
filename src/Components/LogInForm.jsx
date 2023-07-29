@@ -1,75 +1,58 @@
-import React, { useContext } from "react";
+import React, { useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
-// Local Modules
-import { evalInput, evalForm } from "../utils/inputEval";
-//Context
 import UserLogContext from "../Context/UserLogContext";
+import SessionMng from "../Controllers/SessionManager";
+import Input from "./Input";
+import { evalInput, evalForm } from "../utils/inputEval";
 
 const LogInForm = () => {
-  const { setUserToken, logSession } = useContext(UserLogContext);
+  const { setUserToken } = useContext(UserLogContext);
+
+  const evalUname = (uname) => {
+    let value = uname.toLowerCase();
+    if (value.length > 4) return { valid: "valid", data: value };
+    if (value.length > 0) return { valid: "invalid", error: "Debe contener 4 caracteres o mas!", data: value };
+    return { valid: "normal", data: value };
+  };
+  const evalPassword = (value) => {
+    if (value.length > 8) return { valid: "valid", data: value };
+    if (value.length > 0) return { valid: "invalid", error: "Debe contener 8 caracteres o mas!", data: value };
+    return { valid: "normal", data: value };
+  };
 
   const handlingSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const credentials = evalForm(e.target);
-      const userToken = await logSession(credentials);
+    const credentials = evalForm(e.target);
+    const { isOk, data } = await SessionMng.logSession(credentials);
+    if (isOk) {
       Swal.fire({
         position: "center",
         icon: "success",
         showConfirmButton: false,
         timer: 1500,
       });
+
       setTimeout(() => {
-        localStorage.setItem("UserToken", userToken);
-        setUserToken(userToken);
+        localStorage.setItem("UserToken", data);
+        setUserToken(data);
       }, 2000);
-    } catch (error) {
-      if (error == "LogSession/CredentialsNotFound") {
-        Swal.fire({
-          position: "center",
-          icon: "error",
-          title: "Usuario y/o Contraseña incorrecta",
-          showConfirmButton: false,
-          timer: 1500,
-        });
-      }
+    } else {
+      Swal.fire({
+        position: "center",
+        icon: "error",
+        title: "Usuario y/o Contraseña incorrecta",
+        showConfirmButton: false,
+        timer: 1500,
+      });
     }
   };
 
   return (
     <form onSubmit={handlingSubmit} className='flex flex-wrap justify-center w-11/12 h-min py-6 my-5 mx-auto rounded-lg bg-gradient-to-r from-purple-500 to-pink-500'>
       <h1 className='text-4xl p-1 mb-5'>Iniciar Sesion</h1>
-      <div className='flex justify-center flex-wrap w-full m-1'>
-        <p className='w-full mx-5 my-2' htmlFor='uname'>
-          Nombre de usuario:
-        </p>
-        <input
-          type='text'
-          name='uname'
-          id='uname'
-          onChange={(e) => {
-            evalInput(e.target);
-          }}
-          className='w-full p-1 mx-5 my-2 outline-none border-2 border-gray-400 hover:border-gray-500 rounded-lg'
-          required
-        />
-      </div>
-      <div className='flex justify-center flex-wrap w-full m-1'>
-        <p className='w-full mx-5 my-2' htmlFor='password'>
-          Contraseña:
-        </p>
-        <input
-          type='password'
-          name='password'
-          id='password'
-          onChange={(e) => {
-            evalInput(e.target);
-          }}
-          className='w-full p-1 mx-5 my-2 outline-none border-2 border-gray-400 hover:border-gray-500 rounded-lg'
-          required
-        />
-      </div>
+      <Input type={"text"} name={"uname"} title={"Nombre de Usuario"} evaluator={evalUname} required={true} />
+      <Input type={"password"} name={"password"} title={"Contraseña"} evaluator={evalPassword} required={true} />
       <div className='flex justify-center flex-wrap w-full m-1'>
         <button type='submit' className='w-full py-2 mx-5 my-2 rounded-lg cursor-pointer bg-gradient-to-r from-sky-500 to-indigo-500'>
           Iniciar Sesion

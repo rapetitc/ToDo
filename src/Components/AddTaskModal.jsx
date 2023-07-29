@@ -1,12 +1,11 @@
 import React, { useState, useContext } from "react";
-import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
 import Swal from "sweetalert2";
-//Local Modules
-import { db } from "../firebase";
-import { evalForm } from "../utils/inputEval";
-//Context
-import UserLogContext from "../Context/UserLogContext";
 import * as moment from "moment";
+import { dateFormat } from "../utils/utils";
+import UserLogContext from "../Context/UserLogContext";
+import SessionMng from "../Controllers/SessionManager";
+import TaskMng from "../Controllers/TaskManager";
+import UserMng from "../Controllers/UserManager";
 
 const TitleSection = ({ title, setTitle }) => {
   return (
@@ -15,7 +14,7 @@ const TitleSection = ({ title, setTitle }) => {
         type='text'
         name='tasktitle'
         className='w-full p-1 mx-2 text-2xl outline-none'
-        placeholder='Titulo de la tarea'
+        placeholder='Titulo'
         value={title}
         onChange={({ target }) => {
           setTitle(target.value);
@@ -47,33 +46,36 @@ const TaskListSection = ({ taskList, setTaskList, emptyTask }) => {
   return (
     <div className='flex flex-wrap w-full p-1 my-1 mx-2 border-b-2'>
       <p className='m-1 indent-1'>Tareas:</p>
-      {taskList.map((data, i) => {
-        return (
-          <div className='flex justify-center w-full mx-5 my-2' key={i}>
-            <input
-              type='text'
-              name={`tarea-${i + 1}`}
-              className='w-full p-1 text-xl outline-none border-b-2 border-gray-400 hover:border-gray-500'
-              placeholder='Tarea'
-              value={data.task}
-              onChange={({ target }) => {
-                updateTask(i, target.value);
-              }}
-            />
-            <button
-              type='button'
-              className='p-1 m-1'
-              onClick={() => {
-                removeTask(i);
-              }}
-            >
-              <svg xmlns='http://www.w3.org/2000/svg' fill='currentColor' className='h-5' viewBox='0 0 16 16'>
-                <path d='M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5Zm-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5ZM4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06Zm6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528ZM8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5Z' />
-              </svg>
-            </button>
-          </div>
-        );
-      })}
+      <div className='w-full mx-3'>
+        {taskList.map((data, i) => {
+          return (
+            <div className='flex justify-center w-full  my-2' key={i}>
+              <input
+                type='text'
+                name={`tarea-${i + 1}`}
+                className='w-full mx-2 p-1 text-xl outline-none border-b-2 border-gray-400 hover:border-gray-500'
+                placeholder='Tarea'
+                value={data.task}
+                onChange={({ target }) => {
+                  updateTask(i, target.value);
+                }}
+              />
+              <button
+                type='button'
+                className='p-1'
+                onClick={() => {
+                  removeTask(i);
+                }}
+              >
+                <svg xmlns='http://www.w3.org/2000/svg' fill='currentColor' className='h-5' viewBox='0 0 16 16'>
+                  <path d='M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5Zm-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5ZM4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06Zm6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528ZM8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5Z' />
+                </svg>
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
       <div className='flex justify-center w-full my-2'>
         <button type='button' className='mx-3 p-2 text-md text-blue-400 hover:underline' onClick={addTask}>
           <svg xmlns='http://www.w3.org/2000/svg' fill='currentColor' className='h-5' viewBox='0 0 16 16'>
@@ -87,35 +89,30 @@ const TaskListSection = ({ taskList, setTaskList, emptyTask }) => {
 };
 //TODO Hacer que la seccion de usuarios encontrados tenga un maximo heigh y tenga scroll
 const AssignationSection = ({ assignations, setAssignations }) => {
-  const { actSession } = useContext(UserLogContext);
+  const { userToken } = useContext(UserLogContext);
   const [usersFoundList, setUsersFoundList] = useState([]);
 
   const handlingSearchUser = async ({ target }) => {
-    const value = target.value;
+    const { value } = target;
+
     if (value.length > 3) {
-      try {
-        actSession(async (userId) => {
-          // TODO Hacer que devuelva probabilidades basado en el texto entrante
-          const resGet = await getDocs(query(collection(db, "users"), where("uname", "==", value)));
-          const usersFound = resGet.docs.map((doc) => {
-            return { ...doc.data(), userId: doc.id };
-          });
-          setUsersFoundList(usersFound);
-        });
-      } catch (error) {
-        console.log(error);
-      }
+      SessionMng.actSession(userToken, async (userId) => {
+        const { isOk, data } = UserMng.getUsersByUname();
+        if (isOk) return setUsersFoundList(data);
+        return setUsersFoundList([]);
+      });
     }
+
     setUsersFoundList([]);
   };
-  const assignTaskTo = ({ uname, userId, fname, lname }) => {
+  const assignTaskTo = (userId) => {
     const copyAssignations = [...assignations];
-    if (!copyAssignations.find((user) => user.userId == userId)) copyAssignations.push({ uname, userId, fname, lname });
+    if (!copyAssignations.find((user) => user.userId == userId)) copyAssignations.push(userId);
     setAssignations(copyAssignations);
   };
   const removeAssignation = (userId) => {
     const newAssignations = assignations.filter((assignation) => {
-      assignation.userId != userId;
+      return assignation.userId != userId;
     });
     setAssignations(newAssignations);
   };
@@ -128,7 +125,7 @@ const AssignationSection = ({ assignations, setAssignations }) => {
           <p>Sin asignaciones</p>
         ) : (
           <>
-            {assignations.map(({ uname, userId, fname, lname }, i) => {
+            {assignations.map(({ userId, uname, fullname }, i) => {
               return (
                 <button
                   key={i}
@@ -138,7 +135,7 @@ const AssignationSection = ({ assignations, setAssignations }) => {
                   }}
                   className='hover:underline'
                 >
-                  {`${fname} ${lname} (${uname})`}
+                  {`${fullname.fname} ${fullname.lname} (${uname})`}
                 </button>
               );
             })}
@@ -146,17 +143,17 @@ const AssignationSection = ({ assignations, setAssignations }) => {
         )}
         <div className='flex flex-wrap justify-center w-full'>
           <input type='search' placeholder='Buscar usuario' className='w-full mt-2 mx-2 p-2 border-b-2 outline-none' onChange={handlingSearchUser} />
-          {usersFoundList.map(({ uname, userId, fname, lname }, i) => {
+          {usersFoundList.map(({ userId, uname, fullname }, i) => {
             return (
               <button
                 key={i}
                 type='button'
                 onClick={() => {
-                  assignTaskTo({ uname, userId, fname, lname });
+                  assignTaskTo({ userId, uname, fullname });
                 }}
                 className='w-full mx-2 p-1 text-center bg-gray-300'
               >
-                {`${uname} (${fname} ${lname})`}
+                {`${fullname.fname} ${fullname.lname} (${uname})`}
               </button>
             );
           })}
@@ -167,14 +164,15 @@ const AssignationSection = ({ assignations, setAssignations }) => {
 };
 const LimitDateSection = ({ limitDate, setLimitDate }) => {
   const addRemLimitDate = (status) => {
-    status ? setLimitDate(moment().add(1, "h").format("DD-MM-YYYY, HH:mm:ss")) : setLimitDate("NoLimits");
+    status ? setLimitDate(moment().add(1, "h").format(dateFormat)) : setLimitDate("NoLimits");
   };
   const adjustLimitDate = ({ target }) => {
-    let date = moment(limitDate, "DD-MM-YYYY, HH:mm:ss").format("DD-MM-YYYY"),
-      time = moment(limitDate, "DD-MM-YYYY, HH:mm:ss").format("HH:mm"),
+    let { type, value } = target,
+      date = moment(limitDate, dateFormat).format("DD-MM-YYYY"),
+      time = moment(limitDate, dateFormat).format("HH:mm"),
       datetime = `${date}, ${time}`;
-    if (target.type == "date") datetime = moment(`${target.value} ${time}`, "YYYY-MM-DD, HH:mm").format("DD-MM-YYYY, HH:mm:ss");
-    if (target.type == "time") datetime = moment(`${date} ${target.value}`, "DD-MM-YYYY, HH:mm").format("DD-MM-YYYY, HH:mm:ss");
+    if (type == "date") datetime = moment(`${value} ${time}`, "YYYY-MM-DD, HH:mm").format(dateFormat);
+    if (type == "time") datetime = moment(`${date} ${value}`, "DD-MM-YYYY, HH:mm").format(dateFormat);
     setLimitDate(datetime);
   };
 
@@ -191,7 +189,7 @@ const LimitDateSection = ({ limitDate, setLimitDate }) => {
           Asignar fecha limite
         </button>
       ) : (
-        <div className='flex flex-wrap justify-between items-center p-1'>
+        <div className='flex flex-wrap justify-between items-center w-full p-1'>
           <p className='m-2 indent-1'>Fecha/Hora de vencimiento:</p>
           <button
             onClick={() => {
@@ -203,14 +201,14 @@ const LimitDateSection = ({ limitDate, setLimitDate }) => {
               <path d='M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z' />
             </svg>
           </button>
-          <div className='flex flex-wrap w-full'>
-            <div className='flex justify-center items-center w-full'>
+          <div className='flex flex-wrap justify-center w-full'>
+            <div className='flex justify-center items-center'>
               <p className='h-min'>Fecha:</p>
-              <input type='date' onChange={adjustLimitDate} value={moment(limitDate, "DD-MM-YYYY, HH:mm:ss").format("YYYY-MM-DD")} min={moment().format("YYYY-MM-DD")} className='mx-1 p-1 outline-none border-b-2' />
+              <input type='date' onChange={adjustLimitDate} value={moment(limitDate, dateFormat).format("YYYY-MM-DD")} min={moment().format("YYYY-MM-DD")} className='mx-1 p-1 outline-none border-b-2' />
             </div>
-            <div className='flex justify-center items-center w-full'>
+            <div className='flex justify-center items-center'>
               <p className='h-min'>Hora:</p>
-              <input type='time' onChange={adjustLimitDate} value={moment(limitDate, "DD-MM-YYYY, HH:mm:ss").format("HH:mm")} className='mx-1 p-1 outline-none border-b-2' />
+              <input type='time' onChange={adjustLimitDate} value={moment(limitDate, dateFormat).format("HH:mm")} className='mx-1 p-1 outline-none border-b-2' />
             </div>
           </div>
         </div>
@@ -219,13 +217,13 @@ const LimitDateSection = ({ limitDate, setLimitDate }) => {
   );
 };
 const AddTaskModal = ({ isAddTaskModalOpen, setAddTaskModalStatus, getNewData }) => {
-  const { actSession } = useContext(UserLogContext);
+  const { userToken } = useContext(UserLogContext),
+    emptyTask = [{ task: "", status: false }];
 
-  const [title, setTitle] = useState("");
-  const emptyTask = [{ task: "", status: false }],
-    [taskList, setTaskList] = useState(emptyTask);
-  const [assignations, setAssignations] = useState([]);
-  const [limitDate, setLimitDate] = useState("NoLimits");
+  const [title, setTitle] = useState(""),
+    [taskList, setTaskList] = useState(emptyTask),
+    [assignations, setAssignations] = useState([]),
+    [limitDate, setLimitDate] = useState("NoLimits");
 
   const cleanTask = () => {
     setTitle("");
@@ -236,14 +234,17 @@ const AddTaskModal = ({ isAddTaskModalOpen, setAddTaskModalStatus, getNewData })
 
   const handlerSubmit = async (e) => {
     e.preventDefault();
-    try {
-      evalForm(e.target);
-      await actSession(async (userId) => {
-        // TODO Luego de realizar la actualizacion sobre TaskList descomentar el codigo de abajo
-        // const assignationsFormatted = assignations.map((user) => {
-        //   return user.userId;
-        // });
-        await addDoc(collection(db, "tasks"), { owner: userId, title, taskList, limitDate, assignations });
+    await SessionMng.actSession(userToken, async (userId) => {
+      const assignationsFormatted = assignations.map(({ userId }) => userId);
+      const { isOk } = await TaskMng.addTask({
+        owner: userId,
+        title,
+        taskList,
+        assignations: assignationsFormatted,
+        limitDate,
+        creationDate: moment().format(dateFormat),
+      });
+      if (isOk) {
         Swal.fire({
           position: "center",
           icon: "success",
@@ -254,15 +255,13 @@ const AddTaskModal = ({ isAddTaskModalOpen, setAddTaskModalStatus, getNewData })
         getNewData();
         setAddTaskModalStatus(false);
         cleanTask();
-      });
-    } catch (error) {
-      console.log(error);
-    }
+      }
+    });
   };
 
   return (
-    <div className={isAddTaskModalOpen ? "absolute top-0 h-full w-full bg-slate-500/50" : "hidden"}>
-      <form onSubmit={handlerSubmit} className='flex flex-wrap w-11/12 mx-auto mt-16 rounded-lg bg-white'>
+    <div className={isAddTaskModalOpen ? "z-10 absolute top-0 h-full w-full bg-slate-500/50" : "hidden"}>
+      <form onSubmit={handlerSubmit} className='flex flex-wrap w-11/12 sm:w-[600px] mx-auto mt-16 rounded-lg bg-white'>
         <TitleSection title={title} setTitle={setTitle} />
         <TaskListSection taskList={taskList} setTaskList={setTaskList} emptyTask={emptyTask} />
         <AssignationSection assignations={assignations} setAssignations={setAssignations} />
@@ -274,11 +273,11 @@ const AddTaskModal = ({ isAddTaskModalOpen, setAddTaskModalStatus, getNewData })
               cleanTask();
               setAddTaskModalStatus(false);
             }}
-            className='mx-3 px-4 py-2 rounded-lg cursor-pointer bg-orange-500 text-white'
+            className='mx-3 px-4 py-2 rounded-lg cursor-pointer underline text-gray-700'
           >
             Cancelar
           </button>
-          <button type='submit' className='mx-3 px-4 py-2 rounded-lg cursor-pointer bg-green-500'>
+          <button type='submit' className='mx-3 px-4 py-2 rounded-lg cursor-pointer bg-green-600 text-white'>
             Guardar Tarea
           </button>
         </div>
