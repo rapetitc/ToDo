@@ -14,7 +14,7 @@ const Header = () => {
   };
   
   return (
-    <header className={`flex ${userToken.length > 0 ? "justify-between" : "justify-center"} align-middle m-1`}>
+    <header className={`flex ${userToken.length > 0 ? "justify-between" : "justify-center"} align-middle m-1 shadow-xl`}>
       <Link to={"/"}>
         <h1 className='p-2 text-4xl'>{pageConfig.title}</h1>
       </Link>

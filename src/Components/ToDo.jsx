@@ -27,7 +27,10 @@ const ToDo = () => {
   return (
     <div className='h-[calc(100vh-64px)]'>
       <AddTaskModal isAddTaskModalOpen={isAddTaskModalOpen} setAddTaskModalStatus={setAddTaskModalStatus} getNewData={getNewData} />
-      <div className='h-[calc(100%-60px)] p-2 overflow-y-scroll'>
+      <div className='h-full p-2 overflow-y-scroll'>
+        <button className="w-full my-2 text-white rounded p-1 bg-blue-400" onClick={()=>{getNewData()}}>
+          Actualizar Lista
+        </button>
         <ToDoList data={data} getNewData={getNewData} />
       </div>
       <div className='absolute bottom-0 right-0 flex justify-center p-2 m-2'>
