@@ -72,7 +72,7 @@ const ToDoList = ({ data, getNewData }) => {
 
   if (data.length > 0) {
     return (
-      <div className='grid gap-2 w-full' style={{ gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
+      <div className='grid gap-2 w-full mb-28' style={{ gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
         {data.map(({ id, title, taskList, assignations, limitDate }, i) => (
           <div className='w-full p-1 bg-white rounded shadow-lg' key={i}>
             <div className='flex justify-between p-1 '>
