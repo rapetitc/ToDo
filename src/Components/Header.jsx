@@ -12,7 +12,7 @@ const Header = () => {
     localStorage.setItem("UserToken", "");
     setUserToken("");
   };
-
+  
   return (
     <header className={`flex ${userToken.length > 0 ? "justify-between" : "justify-center"} align-middle m-1`}>
       <Link to={"/"}>

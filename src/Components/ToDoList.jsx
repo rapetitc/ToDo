@@ -86,7 +86,6 @@ const ToDoList = ({ data, getNewData }) => {
       </div>
     );
   }
-
   return (
     <div className='flex justify-center items-center w-full h-72 '>
       <p className='h-min text-center'>No hay tareas asignadas, agrega una para enlistar las tareas</p>

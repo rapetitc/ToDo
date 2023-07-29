@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 
-const Input = ({ type = "text", name, title, required = false, evaluator }) => {
-  const [validation, setValidation] = useState("normal");
+const Input = ({ type = "text", name, title, required = false, evaluator = undefined, autoComplete = "off" }) => {
+  const [validation, setValidation] = useState();
   const [errorMsg, setErrorMsg] = useState("");
   const [value, setValue] = useState("");
 
   const boderStyle = {
-    normal: "border-slate-600",
+    default: "border-gray-600",
     valid: "border-green-600",
     invalid: "border-red-600",
   };
@@ -26,14 +26,17 @@ const Input = ({ type = "text", name, title, required = false, evaluator }) => {
 
   const handlerValue = async ({ target }) => {
     const { value } = target;
+
     try {
-      if (evaluator == undefined) throw "NoEvaluator";
+      if (evaluator == undefined || value.length < 1) throw "NoEvaluation";
       const { valid, error, data } = await evaluator(value);
+
       setErrorMsg(error);
       setValidation(valid);
       setValue(data);
     } catch (error) {
       setValue(value);
+      setValidation();
     }
   };
 
@@ -42,8 +45,8 @@ const Input = ({ type = "text", name, title, required = false, evaluator }) => {
       <label htmlFor={name} className='mx-3 my-1'>
         {title}
       </label>
-      <div className={`flex items-center w-full p-1 m-1 rounded-md bg-white border-2 ${boderStyle[validation]}`}>
-        <input className='w-full py-1 ps-2 bg-transparent outline-none ' type={type} name={name} id={name} value={value} onChange={handlerValue} required={required} autoComplete='off' />
+      <div className={`flex items-center w-full p-1 m-1 bg-white border-2 rounded-lg ${boderStyle[validation ?? "default"]}`}>
+        <input className='w-full py-1 ps-2 bg-transparent outline-none ' type={type} name={name} id={name} value={value} onChange={handlerValue} required={required} autoComplete={autoComplete} />
         <span>{iconStyle[validation]}</span>
       </div>
       <span className='w-full mx-1 mb-1 text-sm text-center'>{errorMsg}</span>
