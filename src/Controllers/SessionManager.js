@@ -10,16 +10,17 @@ class SessionManager {
   async isSessionActive(token) {
     try {
       const resGet = await getDoc(doc(db, this.dbName, token))
-      if (!resGet.exists()) throw "CheckSession/NotFound"
+      if (!resGet.exists()) throw "IsSessionActive/SessionNotFound"
 
       const { expirationDate, userId } = resGet.data()
-      if (moment(expirationDate, dateFormat).isSameOrAfter(moment().format)) throw "CheckSession/Expired"
+      if (moment(expirationDate, dateFormat).isSameOrAfter(moment().format)) throw "IsSessionActive/SessionExpired"
 
-      return { isOk: true, msg: "Session is active", userId }
+      return { isOk: true, user: userId }
     } catch (error) {
-      if (error == "Session/Expired") return { isOk: false, msg: "Session expired", error }
-      if (error == "Session/NotFound") return { isOk: false, msg: "Session not found", error }
-      return { isOk: false, msg: "Unexpected error when trying to check session status!", error: "CheckSession/Unexpected" }
+      if (error == "IsSessionActive/SessionExpired" || error == "IsSessionActive/SessionNotFound") return { isOk: false, error }
+
+      console.error(error);
+      return { isOk: false, error: "IsSessionActive/UnexpectedError" }
     }
   }
   async logSession({ uname, password }) {
@@ -27,49 +28,64 @@ class SessionManager {
       const { docs } = await getDocs(query(collection(db, "users"), where("uname", "==", uname), where("password", "==", password)));
       if (docs.length == 0) throw "LogSession/CredentialsNotFound";
 
+      const userData = { id: docs[0].id, ...docs[0].data() }
+      if (!userData.status) throw "LogSession/UserDisabled"
+
       const sessionInfo = {
-        userId: docs[0].id,
+        userId: userData.id,
         creationDate: moment().format(dateFormat),
         expirationDate: moment().add(1, "d").format(dateFormat),
       };
-      const { id } = await addDoc(collection(db, this.dbName), sessionInfo)
+      const addRes = await addDoc(collection(db, this.dbName), sessionInfo)
+      localStorage.setItem("token", addRes.id);
 
-      return { isOk: true, msg: "Session logged sucessfully", data: id };
+      const { id, fullname, type, creationdate } = userData
+      localStorage.setItem("user", JSON.stringify({ id, fullname, type, creationdate }));
+
+      return { isOk: true, token: id };
     } catch (error) {
-      if (error == "LogSession/CredentialsNotFound") return { isOk: false, msg: "Credentials not found", error }
-      return { isOk: false, msg: "Unexpected error when trying to log session!", error: "LogSession/Unexpected" }
+      if (error == "LogSession/CredentialsNotFound" || error == "LogSession/CredentialsNotFound") return { isOk: false, error }
+
+      console.error(error);
+      return { isOk: false, error: "LogSession/UnexpectedError" }
     }
   }
   async closeSession(token) {
     try {
       const { isOk, error } = await this.isSessionActive(token)
       if (!isOk) {
-        if (error == "CheckSession/Unexpected") throw "CloseSession/NotAbleToCheck"
-        if (error == "CheckSession/Expired" || error == "CheckSession/NotFound") return { isOk: true, msg: "Session already expired or was not found" }
+        if (error == "IsSessionActive/UnexpectedError") throw "CloseSession/NotAbleToCheck"
+        if (error == "IsSessionActive/SessionExpired" || error == "IsSessionActive/SessionNotFound") return { isOk: true }
       }
 
       await updateDoc(doc(db, this.dbName, token), {
         expirationDate: moment().format(dateFormat),
       });
 
-      return { isOk: true, msg: "Session was closed successfully" }
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      return { isOk: true }
     } catch (error) {
-      if (error = "CloseSession/NotAbleToCheck") return { isOk: false, msg: "Was not able to close session!", error }
-      return { isOk: false, msg: "Unexpected error when trying to close session!", error: "CloseSession/Unexpected" }
+      if (error = "CloseSession/NotAbleToCheck") return { isOk: false, error }
+
+      console.error(error);
+      return { isOk: false, error: "CloseSession/UnexpectedError" }
     }
   }
   async actSession(token, callback) {
     try {
-      const { isOk, userId } = await this.isSessionActive(token)
-
+      const { isOk, user } = await this.isSessionActive(token)
       if (!isOk) throw "ActSession/ActionAborted"
 
-      callback(userId);
+      callback(user);
 
-      return { isOk: true, msg: "Action was successfully done!" }
+      return { isOk: true }
     } catch (error) {
-      if (error == "ActSession/ActionAborted") return { isOk: false, msg: "Action was aborted, it seems that the session has expired!", error }
-      return { isOk: false, msg: "Unexpected error when trying execute a session action!", error: "ActSession/Unexpected" }
+      if (error == "ActSession/ActionAborted") return { isOk: false, error }
+
+      console.error(error);
+      return { isOk: false, error: "ActSession/UnexpectedError" }
     }
   };
 }

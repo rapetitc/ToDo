@@ -15,7 +15,7 @@ const LogInForm = () => {
     e.preventDefault();
     setLoading(true);
     const { luname, password } = evalForm(e.target);
-    const { isOk, data } = await SessionMng.logSession({ uname: luname, password });
+    const { isOk, token } = await SessionMng.logSession({ uname: luname, password });
     if (isOk) {
       Swal.fire({
         position: "center",
@@ -25,8 +25,7 @@ const LogInForm = () => {
       });
 
       setTimeout(() => {
-        localStorage.setItem("UserToken", data);
-        setUserToken(data);
+        setUserToken(token);
       }, 2000);
     } else {
       Swal.fire({

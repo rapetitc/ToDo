@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useContext } from "react";
 import UserLogContext from "../Context/UserLogContext";
+import ThemeContext from "../Context/ThemeContext";
 import AddTaskModal from "./AddTaskModal";
 import ToDoList from "./ToDoList";
 import SessionMng from "../Controllers/SessionManager";
 import TaskMng from "../Controllers/TaskManager";
 
 const ToDo = () => {
+  const { setLoading } = useContext(ThemeContext);
   const { userToken } = useContext(UserLogContext);
   const [data, setData] = useState([]);
   const [isAddTaskModalOpen, setAddTaskModalStatus] = useState(false);
@@ -14,10 +16,12 @@ const ToDo = () => {
     setAddTaskModalStatus(true);
   };
   const getNewData = async () => {
+    setLoading(true)
     await SessionMng.actSession(userToken, async (userId) => {
       const { data } = await TaskMng.getTasksAssignedTo(userId);
       setData(data ?? []);
     });
+    setLoading(false)
   };
 
   useEffect(() => {

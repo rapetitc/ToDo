@@ -1,36 +1,29 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { Link } from "react-router-dom";
+import ThemeContext from "../Context/ThemeContext";
 import UserLogContext from "../Context/UserLogContext";
 import { pageConfig } from "../utils/config";
-import SessionMng from "../Controllers/SessionManager";
-import ThemeContext from "../Context/ThemeContext";
 
 const Header = () => {
-  const { userToken, setUserToken } = useContext(UserLogContext);
-  const { setLoading } = useContext(ThemeContext);
+  const { setMenuOpen } = useContext(ThemeContext);
+  const { userToken } = useContext(UserLogContext);
 
-  const closeSession = async () => {
-    setLoading(true);
-    await SessionMng.closeSession(userToken);
-    localStorage.setItem("UserToken", "");
-    setUserToken("");
-    setLoading(false);
+  const handlerMenuStatus = () => {
+    setMenuOpen(true);
   };
-  
+
   return (
     <header className={`flex ${userToken.length > 0 ? "justify-between" : "justify-center"} align-middle m-1 shadow-xl`}>
       <Link to={"/"}>
         <h1 className='p-2 text-4xl'>{pageConfig.title}</h1>
       </Link>
       {userToken.length > 0 ? (
-        <>
-          <button className='p-2 mx-3' onClick={closeSession}>
-            <svg xmlns='http://www.w3.org/2000/svg' fill='currentColor' className='h-6' viewBox='0 0 16 16'>
-              <path fillRule='evenodd' d='M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z' />
-              <path fillRule='evenodd' d='M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z' />
-            </svg>
-          </button>
-        </>
+        <button onClick={handlerMenuStatus} className="p-1 m-1">
+          <svg xmlns='http://www.w3.org/2000/svg' fill='currentColor' className='h-6' viewBox='0 0 16 16'>
+            <path d='M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z' />
+            <path fillRule='evenodd' d='M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z' />
+          </svg>
+        </button>
       ) : (
         ""
       )}

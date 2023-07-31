@@ -5,7 +5,7 @@ const LoadingUI = () => {
   const { isLoading } = useContext(ThemeContext);
 
   return (
-    <div className={`${isLoading ? "flex" : "hidden"} flex-wrap justify-center items-center fixed top-0 left-0 h-screen w-screen bg-[rgba(255,255,255,0.5)]`}>
+    <div className={`z-50 ${isLoading ? "flex" : "hidden"} flex-wrap justify-center items-center fixed top-0 left-0 h-screen w-screen bg-[rgba(255,255,255,0.5)]`}>
       <span>Loading . . . </span>
     </div>
   );

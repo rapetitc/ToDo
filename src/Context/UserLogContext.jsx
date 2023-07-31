@@ -4,15 +4,12 @@ import SessionMng from "../Controllers/SessionManager";
 const UserLogContext = createContext();
 
 export const UserLogProvider = ({ children }) => {
-  let userTokenLS = localStorage.getItem("UserToken") ?? "";
+  let userTokenLS = localStorage.getItem("token") ?? "";
   const [userToken, setUserToken] = useState(userTokenLS);
 
   const checkingSessionStatus = async () => {
     const { isOk } = await SessionMng.isSessionActive(userToken);
-    if (!isOk) {
-      localStorage.setItem("UserToken", "");
-      setUserToken("");
-    }
+    if (!isOk) setUserToken("");
   };
 
   useEffect(() => {

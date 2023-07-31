@@ -1,12 +1,12 @@
-import React, { createContext, useEffect, useState } from "react";
-import SessionMng from "../Controllers/SessionManager";
+import React, { createContext, useState } from "react";
 
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
+  const [isMenuOpen, setMenuOpen] = useState(false);
   const [isLoading, setLoading] = useState(false);
 
-  return <ThemeContext.Provider value={{ isLoading, setLoading }}>{children}</ThemeContext.Provider>;
+  return <ThemeContext.Provider value={{ isLoading, setLoading, isMenuOpen, setMenuOpen }}>{children}</ThemeContext.Provider>;
 };
 
 export default ThemeContext;
