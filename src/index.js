@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import './style.css';
 //Context
 import { UserLogProvider } from "./Context/UserLogContext";
+import { ThemeProvider } from "./Context/ThemeContext";
 //Component
 import App from "./App";
 
@@ -13,7 +14,9 @@ root.render(
   <React.StrictMode>
     <BrowserRouter>
       <UserLogProvider>
-        <App />
+        <ThemeProvider>
+          <App />
+        </ThemeProvider>
       </UserLogProvider>
     </BrowserRouter>
   </React.StrictMode>

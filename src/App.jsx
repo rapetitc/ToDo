@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 //Context
 import UserLogContext from "./Context/UserLogContext";
 //Components
+import LoadingUI from "./Components/LoadingUI";
 import Header from "./Components/Header";
 import LogInForm from "./Components/LogInForm";
 import CreateUserForm from "./Components/CreateUserForm";
@@ -12,6 +13,7 @@ const App = () => {
   const { userToken } = useContext(UserLogContext);
   return (
     <>
+      <LoadingUI />
       <Header />
       <Routes>
         {userToken.length == 0 ? (

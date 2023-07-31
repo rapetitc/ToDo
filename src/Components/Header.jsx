@@ -3,14 +3,18 @@ import { Link } from "react-router-dom";
 import UserLogContext from "../Context/UserLogContext";
 import { pageConfig } from "../utils/config";
 import SessionMng from "../Controllers/SessionManager";
+import ThemeContext from "../Context/ThemeContext";
 
 const Header = () => {
   const { userToken, setUserToken } = useContext(UserLogContext);
+  const { setLoading } = useContext(ThemeContext);
 
   const closeSession = async () => {
+    setLoading(true);
     await SessionMng.closeSession(userToken);
     localStorage.setItem("UserToken", "");
     setUserToken("");
+    setLoading(false);
   };
   
   return (
