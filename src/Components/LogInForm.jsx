@@ -8,7 +8,7 @@ import { evalForm } from "../utils/inputEval";
 import ThemeContext from "../Context/ThemeContext";
 
 const LogInForm = () => {
-  const { setUserToken } = useContext(UserLogContext);
+  const { setSessionToken } = useContext(UserLogContext);
   const { setLoading } = useContext(ThemeContext);
 
   const handlingSubmit = async (e) => {
@@ -25,7 +25,7 @@ const LogInForm = () => {
       });
 
       setTimeout(() => {
-        setUserToken(token);
+        setSessionToken(token);
       }, 2000);
     } else {
       Swal.fire({

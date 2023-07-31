@@ -5,7 +5,7 @@ import UserLogContext from "../Context/UserLogContext";
 import Swal from "sweetalert2";
 
 const Menu = () => {
-  const { userToken, setUserToken } = useContext(UserLogContext);
+  const { sessionToken, setSessionToken } = useContext(UserLogContext);
   const { setLoading, isMenuOpen, setMenuOpen } = useContext(ThemeContext);
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -15,9 +15,9 @@ const Menu = () => {
 
   const closeSession = async () => {
     setLoading(true);
-    const { isOk } = await SessionMng.closeSession(userToken);
+    const { isOk } = await SessionMng.closeSession(sessionToken);
     if (isOk) {
-      setUserToken("");
+      setSessionToken("");
       setMenuOpen(false);
     }
     setLoading(false);

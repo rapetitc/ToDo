@@ -90,14 +90,14 @@ const TaskListSection = ({ taskList, setTaskList, emptyTask }) => {
 };
 //TODO Hacer que la seccion de usuarios encontrados tenga un maximo heigh y tenga scroll
 const AssignationSection = ({ assignations, setAssignations }) => {
-  const { userToken } = useContext(UserLogContext);
+  const { sessionToken } = useContext(UserLogContext);
   const [usersFoundList, setUsersFoundList] = useState([]);
 
   const handlingSearchUser = async ({ target }) => {
     const { value } = target;
 
     if (value.length > 3) {
-      SessionMng.actSession(userToken, async (user) => {
+      SessionMng.actSession(sessionToken, async (user) => {
         const { isOk, data } = UserMng.getUsersByUname();
         if (isOk) return setUsersFoundList(data);
         return setUsersFoundList([]);
@@ -220,7 +220,7 @@ const LimitDateSection = ({ limitDate, setLimitDate }) => {
 const AddTaskModal = ({ isAddTaskModalOpen, setAddTaskModalStatus, getNewData }) => {
   ThemeContext;
   const { setLoading } = useContext(ThemeContext),
-    { userToken } = useContext(UserLogContext),
+    { sessionToken } = useContext(UserLogContext),
     emptyTask = [{ task: "", status: false }];
 
   const [title, setTitle] = useState(""),
@@ -238,16 +238,17 @@ const AddTaskModal = ({ isAddTaskModalOpen, setAddTaskModalStatus, getNewData })
   const handlerSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    await SessionMng.actSession(userToken, async (user) => {
+    await SessionMng.actSession(sessionToken, async (userID) => {
       const assignationsFormatted = assignations.map(({ user }) => user);
-      const { isOk } = await TaskMng.addTask({
-        owner: user,
+      const taskInfo = {
+        owner: userID,
         title,
         taskList,
         assignations: assignationsFormatted,
         limitDate,
         creationDate: moment().format(dateFormat),
-      });
+      };
+      const { isOk } = await TaskMng.addTask(taskInfo);
       if (isOk) {
         Swal.fire({
           position: "center",
@@ -259,8 +260,16 @@ const AddTaskModal = ({ isAddTaskModalOpen, setAddTaskModalStatus, getNewData })
         getNewData();
         setAddTaskModalStatus(false);
         cleanTask();
-        setLoading(false);
+      } else {
+        Swal.fire({
+          position: "center",
+          icon: "error",
+          title: "Error al intentar guardar la tarea",
+          showConfirmButton: false,
+          timer: 1500,
+        });
       }
+      setLoading(false);
     });
   };
 

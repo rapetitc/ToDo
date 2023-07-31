@@ -11,14 +11,14 @@ import ToDo from "./Components/ToDo";
 import Menu from "./Components/Menu";
 
 const App = () => {
-  const { userToken } = useContext(UserLogContext);
+  const { sessionToken } = useContext(UserLogContext);
   return (
     <>
       <Menu />
       <LoadingUI />
       <Header />
       <Routes>
-        {userToken.length == 0 ? (
+        {!sessionToken ? (
           <>
             <Route path='/' element={<LogInForm />} />
             <Route path='/signin' element={<CreateUserForm />} />

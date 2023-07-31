@@ -8,7 +8,7 @@ import TaskMng from "../Controllers/TaskManager";
 
 const ToDo = () => {
   const { setLoading } = useContext(ThemeContext);
-  const { userToken } = useContext(UserLogContext);
+  const { sessionToken } = useContext(UserLogContext);
   const [data, setData] = useState([]);
   const [isAddTaskModalOpen, setAddTaskModalStatus] = useState(false);
 
@@ -16,12 +16,12 @@ const ToDo = () => {
     setAddTaskModalStatus(true);
   };
   const getNewData = async () => {
-    setLoading(true)
-    await SessionMng.actSession(userToken, async (userId) => {
+    setLoading(true);
+    await SessionMng.actSession(sessionToken, async (userId) => {
       const { data } = await TaskMng.getTasksAssignedTo(userId);
       setData(data ?? []);
     });
-    setLoading(false)
+    setLoading(false);
   };
 
   useEffect(() => {

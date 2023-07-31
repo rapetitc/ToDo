@@ -12,14 +12,14 @@ class SessionManager {
       const resGet = await getDoc(doc(db, this.dbName, token))
       if (!resGet.exists()) throw "IsSessionActive/SessionNotFound"
 
-      const { expirationDate, userId } = resGet.data()
+      const { expirationDate, userID } = resGet.data()
       if (moment(expirationDate, dateFormat).isSameOrAfter(moment().format)) throw "IsSessionActive/SessionExpired"
 
-      return { isOk: true, user: userId }
+      return { isOk: true, userID }
     } catch (error) {
-      if (error == "IsSessionActive/SessionExpired" || error == "IsSessionActive/SessionNotFound") return { isOk: false, error }
+      console.error("IsSessionActive", error);
 
-      console.error(error);
+      if (error == "IsSessionActive/SessionExpired" || error == "IsSessionActive/SessionNotFound") return { isOk: false, error }
       return { isOk: false, error: "IsSessionActive/UnexpectedError" }
     }
   }
@@ -32,59 +32,59 @@ class SessionManager {
       if (!userData.status) throw "LogSession/UserDisabled"
 
       const sessionInfo = {
-        userId: userData.id,
+        userID: userData.id,
         creationDate: moment().format(dateFormat),
         expirationDate: moment().add(1, "d").format(dateFormat),
       };
-      const addRes = await addDoc(collection(db, this.dbName), sessionInfo)
-      localStorage.setItem("token", addRes.id);
+      const { id } = await addDoc(collection(db, this.dbName), sessionInfo)
+      localStorage.setItem("token", id);
 
-      const { id, fullname, type, creationdate } = userData
-      localStorage.setItem("user", JSON.stringify({ id, fullname, type, creationdate }));
+      const { fullname, type, creationdate } = userData
+      localStorage.setItem("user", JSON.stringify({ fullname, type, creationdate }));
 
       return { isOk: true, token: id };
     } catch (error) {
-      if (error == "LogSession/CredentialsNotFound" || error == "LogSession/CredentialsNotFound") return { isOk: false, error }
+      console.error("LogSession", error);
 
-      console.error(error);
+      if (error == "LogSession/CredentialsNotFound" || error == "LogSession/CredentialsNotFound") return { isOk: false, error }
       return { isOk: false, error: "LogSession/UnexpectedError" }
     }
   }
   async closeSession(token) {
     try {
       const { isOk, error } = await this.isSessionActive(token)
-      if (!isOk) {
-        if (error == "IsSessionActive/UnexpectedError") throw "CloseSession/NotAbleToCheck"
-        if (error == "IsSessionActive/SessionExpired" || error == "IsSessionActive/SessionNotFound") return { isOk: true }
+      if (isOk) {
+        await updateDoc(doc(db, this.dbName, token), {
+          expirationDate: moment().format(dateFormat),
+        });
       }
 
-      await updateDoc(doc(db, this.dbName, token), {
-        expirationDate: moment().format(dateFormat),
-      });
+      if (error == "IsSessionActive/UnexpectedError") throw "CloseSession/NotAbleToCheck"
+      // if (error == "IsSessionActive/SessionExpired" || error == "IsSessionActive/SessionNotFound") return { isOk: true }
 
       localStorage.removeItem("token");
       localStorage.removeItem("user");
 
       return { isOk: true }
     } catch (error) {
-      if (error = "CloseSession/NotAbleToCheck") return { isOk: false, error }
+      console.error("CloseSession", error);
 
-      console.error(error);
+      if (error = "CloseSession/NotAbleToCheck") return { isOk: false, error }
       return { isOk: false, error: "CloseSession/UnexpectedError" }
     }
   }
   async actSession(token, callback) {
     try {
-      const { isOk, user } = await this.isSessionActive(token)
+      const { isOk, userID } = await this.isSessionActive(token)
       if (!isOk) throw "ActSession/ActionAborted"
 
-      callback(user);
+      callback(userID);
 
       return { isOk: true }
     } catch (error) {
-      if (error == "ActSession/ActionAborted") return { isOk: false, error }
+      console.error("ActSession", error);
 
-      console.error(error);
+      if (error == "ActSession/ActionAborted") return { isOk: false, error }
       return { isOk: false, error: "ActSession/UnexpectedError" }
     }
   };
