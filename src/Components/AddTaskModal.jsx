@@ -6,6 +6,7 @@ import UserLogContext from "../Context/UserLogContext";
 import SessionMng from "../Controllers/SessionManager";
 import TaskMng from "../Controllers/TaskManager";
 import UserMng from "../Controllers/UserManager";
+import ThemeContext from "../Context/ThemeContext";
 
 const TitleSection = ({ title, setTitle }) => {
   return (
@@ -96,7 +97,7 @@ const AssignationSection = ({ assignations, setAssignations }) => {
     const { value } = target;
 
     if (value.length > 3) {
-      SessionMng.actSession(userToken, async (userId) => {
+      SessionMng.actSession(userToken, async (user) => {
         const { isOk, data } = UserMng.getUsersByUname();
         if (isOk) return setUsersFoundList(data);
         return setUsersFoundList([]);
@@ -105,14 +106,14 @@ const AssignationSection = ({ assignations, setAssignations }) => {
 
     setUsersFoundList([]);
   };
-  const assignTaskTo = (userId) => {
+  const assignTaskTo = (user) => {
     const copyAssignations = [...assignations];
-    if (!copyAssignations.find((user) => user.userId == userId)) copyAssignations.push(userId);
+    if (!copyAssignations.find((user) => user.user == user)) copyAssignations.push(user);
     setAssignations(copyAssignations);
   };
-  const removeAssignation = (userId) => {
+  const removeAssignation = (user) => {
     const newAssignations = assignations.filter((assignation) => {
-      return assignation.userId != userId;
+      return assignation.user != user;
     });
     setAssignations(newAssignations);
   };
@@ -125,13 +126,13 @@ const AssignationSection = ({ assignations, setAssignations }) => {
           <p>Sin asignaciones</p>
         ) : (
           <>
-            {assignations.map(({ userId, uname, fullname }, i) => {
+            {assignations.map(({ user, uname, fullname }, i) => {
               return (
                 <button
                   key={i}
                   type='button'
                   onClick={() => {
-                    removeAssignation(userId);
+                    removeAssignation(user);
                   }}
                   className='hover:underline'
                 >
@@ -143,13 +144,13 @@ const AssignationSection = ({ assignations, setAssignations }) => {
         )}
         <div className='flex flex-wrap justify-center w-full'>
           <input type='search' placeholder='Buscar usuario' className='w-full mt-2 mx-2 p-2 border-b-2 outline-none' onChange={handlingSearchUser} />
-          {usersFoundList.map(({ userId, uname, fullname }, i) => {
+          {usersFoundList.map(({ user, uname, fullname }, i) => {
             return (
               <button
                 key={i}
                 type='button'
                 onClick={() => {
-                  assignTaskTo({ userId, uname, fullname });
+                  assignTaskTo({ user, uname, fullname });
                 }}
                 className='w-full mx-2 p-1 text-center bg-gray-300'
               >
@@ -217,7 +218,9 @@ const LimitDateSection = ({ limitDate, setLimitDate }) => {
   );
 };
 const AddTaskModal = ({ isAddTaskModalOpen, setAddTaskModalStatus, getNewData }) => {
-  const { userToken } = useContext(UserLogContext),
+  ThemeContext;
+  const { setLoading } = useContext(ThemeContext),
+    { userToken } = useContext(UserLogContext),
     emptyTask = [{ task: "", status: false }];
 
   const [title, setTitle] = useState(""),
@@ -234,10 +237,11 @@ const AddTaskModal = ({ isAddTaskModalOpen, setAddTaskModalStatus, getNewData })
 
   const handlerSubmit = async (e) => {
     e.preventDefault();
-    await SessionMng.actSession(userToken, async (userId) => {
-      const assignationsFormatted = assignations.map(({ userId }) => userId);
+    setLoading(true);
+    await SessionMng.actSession(userToken, async (user) => {
+      const assignationsFormatted = assignations.map(({ user }) => user);
       const { isOk } = await TaskMng.addTask({
-        owner: userId,
+        owner: user,
         title,
         taskList,
         assignations: assignationsFormatted,
@@ -255,6 +259,7 @@ const AddTaskModal = ({ isAddTaskModalOpen, setAddTaskModalStatus, getNewData })
         getNewData();
         setAddTaskModalStatus(false);
         cleanTask();
+        setLoading(false);
       }
     });
   };
